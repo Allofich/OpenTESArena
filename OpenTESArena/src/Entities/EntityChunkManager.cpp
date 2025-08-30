@@ -823,8 +823,10 @@ void EntityChunkManager::updateCitizenStates(double dt, EntityChunk &entityChunk
 }
 
 void EntityChunkManager::updateEnemyStates(double dt, EntityChunk &entityChunk, const WorldDouble2 &playerPositionXZ,
-	JPH::PhysicsSystem &physicsSystem, const VoxelChunkManager &voxelChunkManager)
+	JPH::PhysicsSystem &physicsSystem, const VoxelChunkManager &voxelChunkManager, Random &random)
 {
+	static bool playerHidden = false; // toggle with I key
+
 	JPH::BodyInterface &bodyInterface = physicsSystem.GetBodyInterface();
 
 	for (int i = static_cast<int>(entityChunk.entityIDs.size()) - 1; i >= 0; i--)
@@ -863,32 +865,137 @@ void EntityChunkManager::updateEnemyStates(double dt, EntityChunk &entityChunk, 
 
 		const std::optional<int> idleStateIndex = animDef.findStateIndex(EntityAnimationUtils::STATE_IDLE.c_str());
 		const std::optional<int> walkStateIndex = animDef.findStateIndex(EntityAnimationUtils::STATE_WALK.c_str());
-		
-		if (!idleStateIndex.has_value() || !walkStateIndex.has_value())
-		{
+		const std::optional<int> attackStateIndex = animDef.findStateIndex(EntityAnimationUtils::STATE_ATTACK.c_str());
+		if (!idleStateIndex.has_value() || !walkStateIndex.has_value() || !attackStateIndex.has_value()) {
 			continue;
 		}
 
+		double currentTime = static_cast<double>(SDL_GetTicks());
+
+		if ((currentTime - entityInst.lastUpdateTime) < 140)
+			continue;
+		else
+			entityInst.lastUpdateTime = currentTime;
+
+		// ---- Distance check (Arenafs gManhattanishh) ----
+		auto arenaDistance = [](const WorldDouble2& a, const WorldDouble2& b) {
+			double dx = std::abs(a.x - b.x);
+			double dz = std::abs(a.y - b.y);
+			if (dz <= dx) std::swap(dx, dz);
+			return (dx * 0.25) + dz;
+			};
+		const double distArena = arenaDistance(entityPositionXZ, playerPositionXZ);
+
+		if (distArena > 800 / MIFUtils::ARENA_UNITS)
+			continue;
+
 		EntityAnimationInstance &animInst = this->animInsts.get(entityInst.animInstID);
 
-		if (entityInst.directionID < 0)
-		{
-			EntityDirectionID directionID;
-			if (this->directions.tryAlloc(&directionID))
-			{
-				entityInst.directionID = directionID;
-				VoxelDouble2 &entityDir = this->directions.get(entityInst.directionID);
-				entityDir = distToPlayerSqr > 0.01 ? dirToPlayer.normalized() : VoxelDouble2(1.0, 0.0);
+		// ---- Speed calculation (Arena formula) ----
+			const int currentSpeed = 76; // TODO: load from enemy stats
+			entityInst.speed = ((currentSpeed * 20) >> 8) + 20;
+
+		// ---- Direction setup ----
+		VoxelDouble2& entityDir = this->directions.get(entityInst.directionID);
+		if (!playerHidden) {
+			// Face player
+			VoxelDouble2 dirToPlayer = playerPositionXZ - entityPositionXZ;
+			if (dirToPlayer.lengthSquared() > 0.001) {
+				entityDir = dirToPlayer.normalized();
 			}
-			else
+		}
+		else {
+			// idle if player hidden
+			if (animInst.currentStateIndex != *idleStateIndex) {
+				animInst.setStateIndex(*idleStateIndex);
+			}
+			continue;
+		}
+
+		// ---- Attack handling ----
+		if (entityInst.isAttacking) {
+			// Check for melee hit on frame 10
+			if (animInst.currentStateIndex == *attackStateIndex &&
+				animInst.progressPercent == 1.0)
 			{
-				DebugLogError("Could not assign EntityDirectionID for enemy");
+				//DebugLog("Enemy melee hit frame!");
+				// TODO: call actual melee hit resolution
+				entityInst.isAttacking = false;
+			}
+		}
+		else if (distArena <= 170.0 / MIFUtils::ARENA_UNITS) {
+			// Trigger new attack
+			//DebugLogWarning("New attack because distArena is " + std::to_string(distArena) + " ---");
+			//DebugLogWarning("And the other thang is  " + std::to_string(170.0 / MIFUtils::ARENA_UNITS) + " ---");
+			if ((random.next() & 7) != 0)
 				continue;
+			animInst.setStateIndex(*attackStateIndex);
+			entityInst.isAttacking = true;
+			continue; // donft move this tick
+		}
+
+		// ---- Movement (Arena step candidate logic, simplified) ----
+		if (!entityInst.isAttacking) {
+			if (animInst.currentStateIndex != *walkStateIndex) {
+				animInst.setStateIndex(*walkStateIndex);
+			}
+
+			double moveSpeed = entityInst.speed * 0.1; // scaled down for engine
+			WorldDouble2 step = entityDir * moveSpeed * dt;
+			WorldDouble3 newPosition = entityPosition;
+
+			DebugLogWarning("step.x " + std::to_string(step.x) + " ---");
+			DebugLogWarning("step.y " + std::to_string(step.y) + " ---");
+
+			//moveSpeed = entityInst.speed * 2;
+			//step = entityDir * moveSpeed * dt;
+			//DebugLogWarning("2step.x " + std::to_string(step.x) + " ---");
+			//DebugLogWarning("2step.y " + std::to_string(step.y) + " ---");
+
+			//step = (((entityDir * moveSpeed) / 65536) * MIFUtils::ARENA_UNITS);
+			//DebugLogWarning("3step.x " + std::to_string(step.x) + " ---");
+			//DebugLogWarning("3step.y " + std::to_string(step.y) + " ---");
+			newPosition.x += step.x;
+			newPosition.z += step.y;
+
+			const WorldInt2 targetVoxel = VoxelUtils::pointToVoxel(WorldDouble2(newPosition.x, newPosition.z));
+			const CoordInt2 targetCoord = VoxelUtils::worldVoxelToCoord(targetVoxel);
+			bool canMove = false;
+
+			const VoxelChunk* targetChunk = voxelChunkManager.tryGetChunkAtPosition(targetCoord.chunk);
+			if (targetChunk != nullptr) {
+				const VoxelInt3 floorVoxel(targetCoord.voxel.x, 0, targetCoord.voxel.y);
+				const VoxelTraitsDefID floorTraitsID = targetChunk->getTraitsDefID(floorVoxel.x, floorVoxel.y, floorVoxel.z);
+				const VoxelTraitsDefinition& floorTraits = targetChunk->getTraitsDef(floorTraitsID);
+				if (floorTraits.type == ArenaTypes::VoxelType::Floor) {
+					canMove = true;
+				}
+			}
+
+			if (canMove) {
+				entityPosition = newPosition;
+				curEntityChunkPos = VoxelUtils::worldPointToChunk(WorldDouble2(newPosition.x, newPosition.z));
+
+				if (!entityInst.physicsBodyID.IsInvalid()) {
+					const JPH::RVec3 oldPos = bodyInterface.GetPosition(entityInst.physicsBodyID);
+					const JPH::RVec3 newPos(
+						static_cast<float>(newPosition.x),
+						static_cast<float>(oldPos.GetY()),
+						static_cast<float>(newPosition.z));
+					bodyInterface.SetPosition(entityInst.physicsBodyID, newPos, JPH::EActivation::Activate);
+					bodyInterface.ActivateBody(entityInst.physicsBodyID);
+				}
+			}
+			else {
+				// If blocked, rotate slightly like Arena fallback
+				const double angle = std::atan2(entityDir.y, entityDir.x) + (M_PI / 4.0);
+				entityDir.x = std::cos(angle);
+				entityDir.y = std::sin(angle);
 			}
 		}
 
-		VoxelDouble2 &entityDir = this->directions.get(entityInst.directionID);
-		
+
+		/*
 		constexpr double chaseDistanceSqr = 10.0 * 10.0;
 		constexpr double stopDistanceSqr = 0.5 * 0.5;
 		constexpr double attackDistanceSqr = 1.0 * 1.0;
@@ -1001,7 +1108,7 @@ void EntityChunkManager::updateEnemyStates(double dt, EntityChunk &entityChunk, 
 			{
 				bodyInterface.ActivateBody(entityInst.physicsBodyID);
 			}
-		}	
+		}*/
 		if (curEntityChunkPos != prevEntityChunkPos)
 		{
 			EntityChunk &curEntityChunk = this->getChunkAtPosition(curEntityChunkPos);
@@ -1550,7 +1657,7 @@ void EntityChunkManager::update(double dt, BufferView<const ChunkInt2> activeChu
 		EntityChunk &entityChunk = this->getChunkAtIndex(chunkIndex);
 		const VoxelChunk &voxelChunk = voxelChunkManager.getChunkAtPosition(chunkPos);
 		this->updateCitizenStates(dt, entityChunk, playerPositionXZ, isPlayerMoving, isPlayerWeaponSheathed, random, physicsSystem, voxelChunkManager);
-		this->updateEnemyStates(dt, entityChunk, playerPositionXZ, physicsSystem, voxelChunkManager);
+		this->updateEnemyStates(dt, entityChunk, playerPositionXZ, physicsSystem, voxelChunkManager, random);
 
 		for (const EntityInstanceID entityInstID : entityChunk.entityIDs)
 		{

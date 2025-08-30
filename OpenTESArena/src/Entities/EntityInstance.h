@@ -36,7 +36,9 @@ public:
 	EntityPaletteIndicesInstanceID paletteIndicesInstID;
 	EntityItemInventoryInstanceID itemInventoryInstID;
 	EntityLockStateID lockStateID;
-	double lastAttackTime;
+	double lastUpdateTime = 0;
+	bool isAttacking = false;
+	double speed;
 	JPH::BodyID physicsBodyID;
 	UniformBufferID renderTransformBufferID;
 

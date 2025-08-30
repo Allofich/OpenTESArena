@@ -156,7 +156,7 @@ private:
 		bool isPlayerWeaponSheathed, Random &random, JPH::PhysicsSystem &physicsSystem, const VoxelChunkManager &voxelChunkManager);
 
 	void updateEnemyStates(double dt, EntityChunk &entityChunk, const WorldDouble2 &playerPositionXZ, 
-		JPH::PhysicsSystem &physicsSystem, const VoxelChunkManager &voxelChunkManager);
+		JPH::PhysicsSystem &physicsSystem, const VoxelChunkManager &voxelChunkManager, Random &random);
 
 	std::string getCreatureSoundFilename(const EntityDefID defID) const;
 	void updateCreatureSounds(double dt, EntityChunk &entityChunk, const WorldDouble3 &playerPosition, Random &random, AudioManager &audioManager);
