@@ -9,7 +9,7 @@ namespace ArenaSelectionUtils
 	static constexpr int VOXEL_MAX_UNITS = 192;
 	static constexpr double VOXEL_MAX_DISTANCE = static_cast<double>(VOXEL_MAX_UNITS) / MIFUtils::ARENA_UNITS;
 
-	static constexpr int LOOT_MAX_UNITS = 170;
+	static constexpr int LOOT_MAX_UNITS = 230;
 	static constexpr double LOOT_MAX_DISTANCE = static_cast<double>(LOOT_MAX_UNITS) / MIFUtils::ARENA_UNITS;
 
 	static constexpr int CITIZEN_MAX_UNITS = 210; // Slightly higher than idle distance.
