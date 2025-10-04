@@ -184,3 +184,20 @@ const ItemDefinition &ItemLibrary::getGoldDefinition() const
 	DebugAssertMsg(itemDef != nullptr, "Couldn't find gold item definition.");
 	return *itemDef;
 }
+
+ItemDefinitionID ItemLibrary::getGoldDefinitionID() const
+{
+	ItemDefinitionID itemDefID = -1;
+	for (int i = 0; i < this->getCount(); i++)
+	{
+		const ItemDefinition& curItemDef = this->itemDefs[i];
+		if (curItemDef.type == ItemType::Gold)
+		{
+			itemDefID = i;
+			break;
+		}
+	}
+
+	DebugAssertMsg(itemDefID != -1, "Couldn't find gold item definition ID.");
+	return itemDefID;
+}

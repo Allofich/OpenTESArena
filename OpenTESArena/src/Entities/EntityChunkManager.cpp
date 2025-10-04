@@ -15,6 +15,7 @@
 #include "../Assets/TextureManager.h"
 #include "../Audio/AudioManager.h"
 #include "../Collision/PhysicsLayer.h"
+#include "../Game/GameState.h"
 #include "../Items/ItemLibrary.h"
 #include "../Math/Constants.h"
 #include "../Math/RandomUtils.h"
@@ -426,23 +427,45 @@ void EntityChunkManager::initializeEntity(EntityInstance &entityInst, EntityInst
 		}
 		else
 		{
-			const int testItemCount = random.next(4); // Can be empty.
-			if (testItemCount > 0)
+			// Get the number of items as per the original game
+			int itemCount = 0;
+			const int lootChancesIndex = 3; // @todo. 3 is correct for START.MIF.
+			for (int i = 0; i < 4; i++)
+			{
+				if ((random.next(100) + 1) <= BinaryAssetLibrary::getInstance().getExeData().items.lootChances[lootChancesIndex * 4 + i])
+					itemCount++;
+			}
+
+			if (itemCount > 0)
 			{
 				// @todo: figure out passing in ItemDefinitionIDs with initInfo once doing item tables etc
-				const ItemLibrary &itemLibrary = ItemLibrary::getInstance();
-				const std::vector<ItemDefinitionID> testItemDefIDs = itemLibrary.getDefinitionIndicesIf(
-					[](const ItemDefinition &itemDef)
-				{
-					return itemDef.type != ItemType::Misc; // Don't want quest items.
-				});
+				const ItemLibrary& itemLibrary = ItemLibrary::getInstance();
+				ItemInventory& itemInventory = this->itemInventories.get(entityInst.itemInventoryInstID);
 
-				ItemInventory &itemInventory = this->itemInventories.get(entityInst.itemInventoryInstID);
-				for (int i = 0; i < testItemCount; i++)
+				// The first item is always gold
+				const ItemDefinitionID goldItemDefID = itemLibrary.getGoldDefinitionID();
+				itemInventory.insert(goldItemDefID);
+				itemCount--;
+
+				// Calculate the gold amount as per the original game
+				// @todo: There are other means of calculating gold amounts. This is what is used for lootChancesIndex 3.
+				// int goldValue = gameState.getActiveLevelIndex() * gameState.getActiveLevelIndex() + (random.next(100) + 1);
+
+				// Handle second item onward
+				if (itemCount > 0)
 				{
-					const int randomItemIndex = random.next(static_cast<int>(testItemDefIDs.size()));
-					const ItemDefinitionID testItemDefID = testItemDefIDs[randomItemIndex];
-					itemInventory.insert(testItemDefID);
+					const std::vector<ItemDefinitionID> testItemDefIDs = itemLibrary.getDefinitionIndicesIf(
+						[](const ItemDefinition& itemDef)
+						{
+							return (itemDef.type != ItemType::Misc && itemDef.type != ItemType::Gold); // Don't want quest items or gold
+						});
+
+					for (int i = 0; i < itemCount; i++)
+					{
+						const int randomItemIndex = random.next(static_cast<int>(testItemDefIDs.size()));
+						const ItemDefinitionID testItemDefID = testItemDefIDs[randomItemIndex];
+						itemInventory.insert(testItemDefID);
+					}
 				}
 			}
 		}

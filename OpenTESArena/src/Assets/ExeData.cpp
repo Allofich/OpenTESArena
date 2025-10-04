@@ -637,9 +637,11 @@ bool ExeDataItems::init(Span<const std::byte> exeBytes, const KeyValueFile &keyV
 
 	const int goldPieceOffset = GetExeAddress(*section, "GoldPiece");
 	const int bagOfGoldPiecesOffset = GetExeAddress(*section, "BagOfGoldPieces");
+	const int lootChancesOffset = GetExeAddress(*section, "LootChances");
 
 	this->goldPiece = GetExeStringNullTerminated(exeBytes, goldPieceOffset);
 	this->bagOfGoldPieces = GetExeStringNullTerminated(exeBytes, bagOfGoldPiecesOffset);
+	initInt8Array(this->lootChances, exeBytes, lootChancesOffset);
 
 	return true;
 }
