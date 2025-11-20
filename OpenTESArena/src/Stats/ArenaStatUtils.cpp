@@ -10,5 +10,6 @@ int ArenaStatUtils::scale256To100(int value)
 
 int ArenaStatUtils::scale100To256(int value)
 {
-	return (value * 256) / 100;
+	const double scaledValue = (static_cast<double>(value) * 256.0) / 100.0;
+	return static_cast<int>(std::round(scaledValue));
 }
