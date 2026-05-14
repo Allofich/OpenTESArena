@@ -431,12 +431,12 @@ void EntityChunkManager::initializeEntity(EntityInstance &entityInst, EntityInst
 					}
 				}
 
-				if (ArenaEntityUtils::getCreatureHasNonMagicWeaponOrArmor(enemyDef.creature.lootChances, random))
+				if (ArenaEntityUtils::getCreatureHasBasicWeaponOrArmor(enemyDef.creature.lootChances, random))
 				{
 					int weaponOrArmorID;
 					bool isArmor;
 					ArmorMaterialType armorMaterialType;
-					ArenaEntityUtils::getCreatureNonMagicWeaponOrArmor(enemyDef.creature.level, exeData, random, &weaponOrArmorID, &isArmor, &armorMaterialType);
+					ArenaEntityUtils::getCreatureBasicWeaponOrArmor(enemyDef.creature.level, exeData, random, &weaponOrArmorID, &isArmor, &armorMaterialType);
 					// @todo: Get condition percentage from helper function
 
 					if (isArmor)
@@ -479,7 +479,7 @@ void EntityChunkManager::initializeEntity(EntityInstance &entityInst, EntityInst
 					}
 				}
 
-				if (ArenaEntityUtils::getCreatureHasMagicWeaponOrArmor(enemyDef.creature.level, enemyDef.creature.lootChances, random))
+				if (ArenaEntityUtils::getCreatureHasEnhancedWeaponOrArmor(enemyDef.creature.level, enemyDef.creature.lootChances, random))
 				{
 					testItemDefIDs = itemLibrary.getDefinitionIndicesIf(
 						[](const ItemDefinition &itemDef)
@@ -574,11 +574,11 @@ void EntityChunkManager::initializeEntity(EntityInstance &entityInst, EntityInst
 				}
 				else if (i == 2)
 				{
-					// The third possible item is a non-magic weapon or armor
+					// The third possible item is a basic weapon or armor
 					int weaponOrArmorID;
 					bool isArmor;
 					ArmorMaterialType armorMaterialType;
-					ArenaEntityUtils::getLootNonMagicWeaponOrArmor(exeData, random, &weaponOrArmorID, &isArmor, &armorMaterialType);
+					ArenaEntityUtils::getLootBasicWeaponOrArmor(exeData, random, &weaponOrArmorID, &isArmor, &armorMaterialType);
 					// @todo: Get condition percentage from helper function
 
 					if (isArmor)
@@ -622,7 +622,7 @@ void EntityChunkManager::initializeEntity(EntityInstance &entityInst, EntityInst
 				}
 				else if (i == 3)
 				{
-					// The fourth possible item is a magic weapon or armor
+					// The fourth possible item is a weapon or armor with material or magic
 					// @todo: Get item and condition percentage from helper functions
 					testItemDefIDs = itemLibrary.getDefinitionIndicesIf(
 						[](const ItemDefinition &itemDef)
