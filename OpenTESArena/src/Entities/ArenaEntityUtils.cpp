@@ -200,13 +200,13 @@ void ArenaEntityUtils::getHumanEnemyWeapon(int classNumber, const ExeData &exeDa
 			}
 		}
 
+		constexpr int dummyQualityThreshold = 1;
 		if (random.next(100) < 3)
 		{
-			// TODO: Pick magic/material weapon
+			weaponID = ArenaEntityUtils::generateEnhancedWeapon(dummyQualityThreshold, weaponID, exeData, random);
 		}
 		else
 		{
-			constexpr int dummyQualityThreshold = 1;
 			weaponID = ArenaEntityUtils::pickNonMagicWeapon(dummyQualityThreshold, weaponID, exeData, random);
 		}
 
@@ -243,6 +243,107 @@ void ArenaEntityUtils::getHumanEnemyShield(int classNumber, const ExeData &exeDa
 	}
 
 	*outShieldID = shieldID;
+}
+
+int ArenaEntityUtils::generateEnhancedWeapon(int itemQualityThreshold, int specifiedWeaponID, const ExeData &exeData, Random &random)
+{
+	constexpr int maximumThreshold = 20;
+	constexpr int invalidID = -1;
+
+	if (specifiedWeaponID != invalidID)
+	{
+		itemQualityThreshold = maximumThreshold;
+	}
+
+	int retryCount = 0;
+
+	while (retryCount < 200)
+	{
+		int weaponID;
+
+		if (specifiedWeaponID != invalidID)
+		{
+			weaponID = specifiedWeaponID;
+		}
+		else
+		{
+			weaponID = random.next(static_cast<int>(std::size(exeData.equipment.weaponQualities)));
+		}
+
+		if (itemQualityThreshold < exeData.equipment.weaponQualities[weaponID])
+		{
+			retryCount++;
+			continue;
+		}
+
+		const int enhancementRoll = random.next(10) + 1;
+		int enhancementType = 0;
+		for (; enhancementType < std::size(exeData.equipment.enchantmentChances); enhancementType++)
+		{
+			if (enhancementRoll < exeData.equipment.enchantmentChances[enhancementType])
+				break;
+		}
+
+		if (enhancementRoll == 0)
+		{
+			applyMaterialModifier(exeData, random);
+		}
+		else if (enhancementRoll == 1)
+		{
+			applyEnchantmentModifier(itemQualityThreshold, exeData, random);
+		}
+		else
+		{
+			applyMaterialModifier(exeData, random);
+			applyEnchantmentModifier(true, true, itemQualityThreshold, exeData, random);
+		}
+
+		return //item.toItemID();
+	}
+
+	return invalidID;
+}
+
+void ArenaEntityUtils::applyMaterialModifier(const ExeData &exeData, Random &random)
+{
+	int GeneratedItemUniquenessScore = GeneratedItemUniquenessScore + 10;
+	int roll = random.next(99) + 1;
+	int i = 0;
+	for (; i < std::size(exeData.equipment.materialChances); i++)
+	{
+		if (roll < exeData.equipment.materialChances[i]) break;
+	}
+
+	GeneratedItemUniquenessScore = GeneratedItemUniquenessScore + i;
+
+	return;
+}
+
+void ArenaEntityUtils::applyEnchantmentModifier(bool param_1, bool isWeapon, int itemQualityThreshold, const ExeData &exeData, Random &random)
+{
+	if (!param_1) {
+		int NewItemMaterialID = 0xff;
+		int GeneratedItemUniquenessScore = GeneratedItemUniquenessScore + 20;
+	}
+
+	int roll;
+	if (isWeapon)
+	{
+		do {
+			roll = random.next(14);
+		}
+		while (itemQualityThreshold < exeData.equipment.weaponEnchantmentQualities[roll]);
+	}
+	else
+	{
+		do {
+			roll = random.next(14);
+		} while (itemQualityThreshold < exeData.equipment.armorEnchantmentQualities[roll]);
+	}
+
+	GeneratedItemUniquenessScore = GeneratedItemUniquenessScore + roll;
+
+	return;
 }
 
 int ArenaEntityUtils::pickNonMagicArmor(int itemQualityThreshold, int baseMaterial, int specifiedItemID, const ExeData &exeData, Random &random)

@@ -52,6 +52,9 @@ namespace ArenaEntityUtils
 	void getHumanEnemyArmor(int classNumber, int level, const ExeData &exeData, Random &random, std::array<int, 7> &outArmorIDs, ArmorMaterialType *outArmorMaterialType);
 	void getHumanEnemyWeapon(int classNumber, const ExeData &exeData, Random &random, int *outWeaponID);
 	void getHumanEnemyShield(int classNumber, const ExeData &exeData, Random &random, int weaponID, int *outShieldID);
+	int generateEnhancedWeapon(int itemQualityThreshold, int specifiedWeaponID, const ExeData& exeData, Random& random);
+	void applyMaterialModifier(const ExeData& exeData, Random& random);
+	void applyEnchantmentModifier(bool param_1, int itemQualityThreshold, const ExeData& exeData, Random& random);
 	void getCreatureNonMagicWeaponOrArmor(int creatureLevel, const ExeData &exeData, Random &random, int *outWeaponOrArmorID,
 		bool *outIsArmor, ArmorMaterialType *outArmorMaterialType);
 	int getCreatureNonMagicWeaponOrArmorCondition(int maxCondition, const ExeData &exeData, Random &random);

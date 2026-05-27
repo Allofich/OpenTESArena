@@ -35,7 +35,7 @@ IF (MSVC)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 
     # Disable runtime type info.
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /GR-")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /GR")
 
     # Add various optimizations to release builds.
     SET(CMAKE_CXX_FLAGS_RELEASEGENERICNOLTO "/O2 /Ob2 /Oi /Ot /Oy /fp:fast /Zi")
