@@ -52,7 +52,8 @@ double Random::nextReal()
 
 ArenaRandom::ArenaRandom(uint32_t seed)
 {
-	this->value = seed;
+	state1 = static_cast<uint16_t>(seed | 1);
+	state2 = static_cast<uint16_t>(seed >> 16);
 }
 
 ArenaRandom::ArenaRandom()
@@ -60,16 +61,23 @@ ArenaRandom::ArenaRandom()
 
 uint32_t ArenaRandom::getSeed() const
 {
-	return this->value;
+	return
+		static_cast<uint32_t>(state1) | (static_cast<uint32_t>(state2) << 16);
 }
 
-int ArenaRandom::next()
+uint16_t ArenaRandom::next()
 {
-	this->value *= 7143469;
-	return (this->value >> 16) & 0xFFFF;
+	const uint32_t mul = static_cast<uint32_t>(state1) * 0x2D;
+
+	state2 = static_cast<uint16_t>(state2 * 0x2D + state1 * 0x6D + (mul >> 16));
+
+	state1 = static_cast<uint16_t>(mul);
+
+	return state2;
 }
 
 void ArenaRandom::srand(uint32_t seed)
 {
-	this->value = seed;
+	state1 = static_cast<uint16_t>(seed | 1);
+	state2 = static_cast<uint16_t>(seed >> 16);
 }

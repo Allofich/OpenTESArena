@@ -42,6 +42,9 @@ class ArenaRandom
 private:
 	static constexpr uint32_t DEFAULT_SEED = 12345;
 
+	uint16_t state1;
+	uint16_t state2;
+
 	uint32_t value;
 public:
 	ArenaRandom(uint32_t seed);
@@ -50,6 +53,6 @@ public:
 	static constexpr int MAX = std::numeric_limits<uint16_t>::max();
 
 	uint32_t getSeed() const;
-	int next();
+	uint16_t next();
 	void srand(uint32_t seed);
 };
