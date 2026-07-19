@@ -1707,7 +1707,7 @@ void GameWorldUiController::onShowPlayerDeathCinematic(Game &game)
 
 void GameWorldUiController::onHealthDepleted(Game &game)
 {
-	GameWorldUiController::onShowPlayerDeathCinematic(game);
+	//GameWorldUiController::onShowPlayerDeathCinematic(game);
 }
 
 void GameWorldUiController::onStaminaExhausted(Game &game, bool isSwimming, bool isParalyzed, bool isInterior, bool isNight)

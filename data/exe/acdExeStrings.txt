@@ -362,6 +362,7 @@ ThievingSuccessChest=0x4364B
 ThievingFailure=0x435FA
 ThievingFailureChest=0x43637
 ThievingEntranceNoGuardsChance=0x40B0
+ThievingChestMaxLockLevel=0x299FE
 
 [Travel]
 LocationFormatTexts=0x376AD
