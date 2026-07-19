@@ -925,9 +925,9 @@ bool ArenaEntityUtils::doGuardsAppearForViolence(int playerLevel, ArenaRandom &r
 	return random.next(100) < chance;
 }
 
-bool ArenaEntityUtils::doGuardsAppearForTheft(int thievingSkill, ArenaRandom &random)
+bool ArenaEntityUtils::doGuardsAppearForTheft(int thievingChance, ArenaRandom &random)
 {
-	return random.next(100) < (100 - thievingSkill);
+	return random.next(100) < (100 - thievingChance);
 }
 
 int ArenaEntityUtils::getGuardType(const ExeData &exeData, ArenaRandom &random)

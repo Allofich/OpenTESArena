@@ -649,6 +649,8 @@ struct ExeDataThieving
 	std::string thievingFailure;
 	std::string thievingFailureChest;
 
+	uint8_t thievingEntranceNoGuardsChance;
+
 	bool init(Span<const std::byte> exeBytes, const KeyValueFile &keyValueFile);
 };
 

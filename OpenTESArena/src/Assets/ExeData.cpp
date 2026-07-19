@@ -1204,12 +1204,14 @@ bool ExeDataThieving::init(Span<const std::byte> exeBytes, const KeyValueFile &k
 	const int thievingSuccessChestOffset = GetExeAddress(*section, "ThievingSuccessChest");
 	const int thievingFailureOffset = GetExeAddress(*section, "ThievingFailure");
 	const int thievingFailureChestOffset = GetExeAddress(*section, "ThievingFailureChest");
+	const int thievingEntranceNoGuardsChanceOffset = GetExeAddress(*section, "ThievingEntranceNoGuardsChance");
 
 	this->thievingInteractionType = GetExeStringNullTerminated(exeBytes, thievingInteractionTypeOffset);
 	this->thievingSuccess = GetExeStringNullTerminated(exeBytes, thievingSuccessOffset);
 	this->thievingSuccessChest = GetExeStringNullTerminated(exeBytes, thievingSuccessChestOffset);
 	this->thievingFailure = GetExeStringNullTerminated(exeBytes, thievingFailureOffset);
 	this->thievingFailureChest = GetExeStringNullTerminated(exeBytes, thievingFailureChestOffset);
+	this->thievingEntranceNoGuardsChance = static_cast<uint8_t>(exeBytes[thievingEntranceNoGuardsChanceOffset]);
 
 	return true;
 }
